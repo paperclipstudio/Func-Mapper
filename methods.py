@@ -1,9 +1,12 @@
 import math
+import plotly.plotly as py  #
 import plotly.offline as offline
 from plotly.graph_objs import *
-
+from random import random
+import matplotlib.pyplot as plt
 import plotly.figure_factory as ff
 import networkx as nx
+import os
 
 
 def split_into_lines(string):
@@ -160,8 +163,19 @@ def create_function_graph(input_code):
     add_refrences(function_digraph, code_blocks)
     return function_digraph
 
+def get_code_from_file(file_dir: str):
+    file = open(file_dir, 'r')
+    code = file.read()
+    file.close()
+    return code
+
+
 
 def render_output(function_digraph):
+    if function_digraph == {}:
+        print("Empty input")
+        return False
+
 
     graph_network = nx.DiGraph()
 
@@ -174,7 +188,7 @@ def render_output(function_digraph):
         # Add functions as Nodes and with X,Y positioning
         graph_network.add_node(key, name=i, x=0, y=0)
         twopi = math.pi * 2
-        x0, y0 = math.cos(twopi * key / len(s)), math.sin(twopi * key / len(s))
+        x0, y0 = math.cos(twopi * key / len(function_digraph)), math.sin(twopi * key / len(function_digraph))
         graph_network.add_node(key, name=i, x=x0, y=y0)
 
         # Fills lookup
@@ -182,8 +196,8 @@ def render_output(function_digraph):
         key += 1
 
 
-    for i in s:
-        for j in s[i]:
+    for i in function_digraph:
+        for j in function_digraph[i]:
             graph_network.add_edge(lookup[i], lookup[j])
 
     # Builds a plotly scatter diagram from the edge connectors
@@ -213,11 +227,12 @@ def render_output(function_digraph):
             family="Courier New"
         ),
         marker=Marker(
-            showscale=False,
+            showscale=True,
             # colorscale options
             # 'Greys' | 'Greens' | 'Bluered' | 'Hot' | 'Picnic' | 'Portland' |
             # Jet' | 'RdBu' | 'Blackbody' | 'Earth' | 'Electric' | 'YIOrRd' | 'YIGnBu'
             colorscale='YIGnBu',
+            reversescale=True,
             color=[],
             size=2,
 
@@ -228,11 +243,6 @@ def render_output(function_digraph):
                 titleside='right'
             ),
             line=dict(width=2)))
-
-    layout = dict(title='Styled Scatter',
-                  yaxis=dict(zeroline=False),
-                  xaxis=dict(zeroline=False)
-                  )
 
     for node in graph_network.nodes():
         x, y = graph_network.node[node]['x'], graph_network.node[node]['y']
@@ -246,21 +256,8 @@ def render_output(function_digraph):
         list[1].append(edge_trace['y'][i * 3] + edge_trace['y'][i * 3 + 1] * 0.1)
         list[2].append((edge_trace['x'][i * 3 + 1] - edge_trace['x'][i * 3]) * 9)
         list[3].append((edge_trace['y'][i * 3 + 1] - edge_trace['y'][i * 3]) * 9)
-
-    fig = ff.create_quiver(list[0], list[1], list[2], list[3], arrow_scale=0.1, xaxis=)
+    print (list)
+    fig = ff.create_quiver(list[0], list[1], list[2], list[3], arrow_scale=0.1)
     fig['data'].append(node_trace)
     offline.plot(fig, filename='networkx.html')
-
-
-dic_of_functions = {}
-
-#userinput = input("input project dir :")
-
-userinput = 'test.py'
-
-target_file = open(userinput, 'r')
-some_code = (target_file.read())
-
-s = create_function_graph(some_code)
-render_output(s)
 
